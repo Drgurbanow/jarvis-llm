@@ -52,39 +52,6 @@ Your task is to create a high-quality, wittey, multi-turn dialogue log between y
 
 PATH = r"C:\Users\user\Desktop\QLoRa_ready_data"
 
-class PrepData:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.container = list()
-        self.c = 0
-
-    def load_data(self):
-        data = load_dataset(self.file_path)
-        return data["train"]
-
-    def regx_search(self, obj):
-        x = re.search(
-            r"\b(?:python|js|javascript|sql|html|css|c\+\+|java|code|debug|algorithm|function|programming|software|script)\b",
-            obj["instruction"], re.IGNORECASE)
-        if x and "http" not in obj["input"] and "http" not in obj["output"] and "http" not in obj[
-            "instruction"] and "invoke" not in obj['instruction'].lower() and len(obj["output"]):  # <= 1200
-            return True
-        return False
-
-    def filter_data(self, reverse=False):
-        data = self.load_data()
-        for n, i in enumerate(data, start=1):
-            if self.regx_search(i):
-                self.container.append(i)
-                self.c += 1
-                # print(n, i)
-                #print(len(i["instruction"]), len(i["output"]))
-        print(self.c)
-        if reverse:
-            self.container = list(sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse))
-        return self.container
-
-
 class AsyncDeepSeekDataGenerator:
     def __init__(self, system_prompt, api_key, base_url="https://api.deepseek.com", output_folder_path=None, output_file=None, num_of_cat=None):
         self.system_prompt = system_prompt
@@ -160,9 +127,6 @@ print("-------------------------------------------------------------------------
 
 CONCURRENT_REQUESTS = 40
 OUTPUT_FOLDER = r"C:\Users\user\Desktop\QLoRa_ready_data"
-
-#prepare_data = PrepData(r"C:\Users\user\.cache\huggingface\hub\datasets--tatsu-lab--alpaca")
-#sorted_and_filtred_data = prepare_data.filter_data(reverse=True)
 
 
 cat_container = ready_to_generate() # cat_container = [[], [], [], [], [], [], []]
