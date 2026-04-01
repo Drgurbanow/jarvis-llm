@@ -260,7 +260,7 @@ class FindDublicate:
         return self.filtred_cat_colector
 
 def ready_to_generate():
-    data = load_dataset(r".cache\huggingface\hub\datasets--tatsu-lab--alpaca")
+    data = load_dataset("tatsu-lab/alpaca")
     data = data["train"]  # .shuffle(seed=560).select(range(10))  
     
     find_duplicate = FindDuplicate(data)
