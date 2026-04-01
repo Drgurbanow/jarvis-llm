@@ -3,10 +3,10 @@ from openai import OpenAI, AsyncOpenAI
 from tqdm.asyncio import tqdm
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from test_ghg2_filtr import ready_to_generate
+from filter_alpaca import ready_to_generate
 
 
-s3_2 = """MISSION 
+sys_prompt = """MISSION 
 Act as J.A.R.V.I.S. (Just A Rather Very Intelligent System). 
 Your task is to create a high-quality, wittey, multi-turn dialogue log between yourself and Tony Stark (Human), emulating their natural interactions.
 
@@ -50,8 +50,6 @@ Your task is to create a high-quality, wittey, multi-turn dialogue log between y
     ...
 """
 
-PATH = r"C:\Users\user\Desktop\QLoRa_ready_data"
-
 class AsyncDeepSeekDataGenerator:
     def __init__(self, system_prompt, api_key, base_url="https://api.deepseek.com", output_folder_path=None, output_file=None, num_of_cat=None):
         self.system_prompt = system_prompt
@@ -64,11 +62,6 @@ class AsyncDeepSeekDataGenerator:
     def call_client(self):
         self.client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
 
-    def prepare_ready_cat_files(self, folder_path: str=None, num_of_cat: int =None):
-            for i in range(1, num_of_cat + 1):
-                with open(fr"{folder_path}\ready_cat_{i}.jsonl", mode="w", encoding="utf-8") as file:
-                    pass
-
     def prepare_input_data(self, qa_alpaca):
         user_content = f"""
             Instruction: {qa_alpaca['instruction']}
@@ -78,11 +71,7 @@ class AsyncDeepSeekDataGenerator:
         return [{"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": user_content}]
 
-    def write_to_file(self, output_file_path, deepseek_answer):
-        with open(output_file_path, mode="w", encoding="utf-8") as file:
-            file.write(json.dumps(deepseek_answer, ensure_ascii=False) + "\n")
-
-    async def write_to_file2(self, output_file_path=None):
+    async def write_to_file(self, output_file_path=None):
         with open(output_file_path, "a", encoding="utf-8") as file:
             while True:
                 result = await self.write_queue.get()
@@ -97,12 +86,12 @@ class AsyncDeepSeekDataGenerator:
         instruction, input, output= item["instruction"], item["input"], item["output"]
         async with semaphore:
             try:
-                responce = await self.client.chat.completions.create(model="deepseek-chat",
+                response = await self.client.chat.completions.create(model="deepseek-chat",
                                                                      messages=self.prepare_input_data(item),
                                                                      temperature=0.8,
                                                                      timeout=180)
                 result = {"position": d_num, "instruction": instruction, "input": input, "output": output,
-                          "deepseek_answer": responce.choices[0].message.content}
+                          "deepseek_answer": response.choices[0].message.content}
 
                 await self.write_queue.put(result)
             except Exception as e:
@@ -113,7 +102,7 @@ class AsyncDeepSeekDataGenerator:
     async def generate(self, alpaca_data=None, output_file_path=None):
         semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS)
 
-        self.write_task = asyncio.create_task(self.write_to_file2(output_file_path))
+        self.write_task = asyncio.create_task(self.write_to_file(output_file_path))
         with tqdm(total=len(alpaca_data) * 1, desc="Processing DeepSeek") as pbar:
             tasks = [self.process_item(semaphore, item, pbar, d_num=j) for item in alpaca_data for j in range(1)]
             await asyncio.gather(*tasks)
@@ -126,12 +115,12 @@ class AsyncDeepSeekDataGenerator:
 print("----------------------------------------------------------------------------------------")
 
 CONCURRENT_REQUESTS = 40
-OUTPUT_FOLDER = r"C:\Users\user\Desktop\QLoRa_ready_data"
-
+OUTPUT_FOLDER = "your_output_folder_path_here"
+API_KEY = "your_api_key"
 
 cat_container = ready_to_generate() # cat_container = [[], [], [], [], [], [], []]
 for n, cat in enumerate(cat_container, start=1):
-    prepare_generator = AsyncDeepSeekDataGenerator(s3_2, "sk-fcb6d2ba20994f46b7e3a03e122b1338", output_folder_path=OUTPUT_FOLDER, num_of_cat=7)
+    prepare_generator = AsyncDeepSeekDataGenerator(sys_prompt, API_KEY, output_folder_path=OUTPUT_FOLDER, num_of_cat=7)
     X = fr"{OUTPUT_FOLDER}\ready_cat_{n}.jsonl"
     asyncio.run(prepare_generator.generate(alpaca_data=cat, output_file_path=X))
 
