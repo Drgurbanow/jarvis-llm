@@ -9,7 +9,7 @@ class CategoryOne:
         self.data = data
         self.container = list()
 
-    def search_data_1(self):
+    def search_data(self):
         c = 0
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -20,10 +20,7 @@ class CategoryOne:
                 self.container.append(i)
                 c += 1
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_1(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         S, M, L = list(), list(), list()
         for i in self.container:
             if 200 <= len(i["output"]) < 380:
@@ -69,10 +66,7 @@ class CategoryTwo:
                             self.container.append(i)
                             c += 1
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_2(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         S, M, L = list(), list(), list()
         for i in self.container:
             if 200 <= len(i["output"]) < 460:
@@ -95,7 +89,7 @@ class CategoryThree:
         self.data = data
         self.container = list()
 
-    def search_data_3(self):
+    def search_data(self):
         c = 0  # theory|explain|reason|physics|formula|calculate|why
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -104,12 +98,8 @@ class CategoryThree:
             if x and "http" not in i["input"] and "http" not in i["output"] and "http" not in i["instruction"]:
                 self.container.append(i)
                 c += 1
-        print(c)
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_3(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         container_biz = []
         business_markers = ["strategy", "marketing", "business", "proposal", "investment", "startup", "revenue",
                             "market", "customer", "product"]
@@ -135,7 +125,7 @@ class CategoryFour:
         self.data = data
         self.container = list()
 
-    def search_data_4(self):
+    def search_data(self):
         c = 0
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -145,10 +135,7 @@ class CategoryFour:
                 self.container.append(i)
                 c += 1
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_4(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         S, M, L = list(), list(), list()
         new_container = (i for i in self.container if 280 <= len(i["output"]) <= 1200)
         for i in new_container:
@@ -172,7 +159,7 @@ class CategoryFive:
         self.data = data
         self.container = list()
 
-    def search_data_5(self):
+    def search_data(self):
         c = 0
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -182,10 +169,7 @@ class CategoryFive:
                 self.container.append(i)
                 c += 1
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_5(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         S, M, L = list(), list(), list()
         new_container = list(i for i in self.container if 200 <= len(i["output"]) <= 1000)
         for i in new_container:
@@ -209,7 +193,7 @@ class CategorySix:
         self.data = data
         self.container = list()
 
-    def search_data_6(self):
+    def search_data(self):
         c = 0
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -219,10 +203,7 @@ class CategorySix:
                 self.container.append(i)
                 c += 1
 
-    def sort(self, reverse=False):
-        self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
-
-    def final_filter_6(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         category_6 = list(i for i in self.container if 150 <= len(i["output"]) <= 1200)
         if hash_container:
             return set(category_6)
@@ -234,7 +215,7 @@ class CategorySeven:
         self.data = data
         self.container = list()
 
-    def search_data_7(self):
+    def search_data(self):
         c = 0
         for n, i in enumerate(self.data, start=1):
             x = re.search(
@@ -247,7 +228,7 @@ class CategorySeven:
     def sort(self, reverse=False):
         self.container = sorted(self.container, key=lambda x: len(x["output"]), reverse=reverse)
 
-    def final_filter_7(self, hash_container=False):
+    def final_filter(self, hash_container=False):
         category_7 = list(i for i in self.container if 100 <= len(i["output"]) <= 920)
         if hash_container:
             return set(category_7)
@@ -255,13 +236,14 @@ class CategorySeven:
 
 
 class FindDublicate:
-    def __init__(self, filtred_cat_colector):
+    def __init__(self, data):
         self.c = 0
-        self.filtred_cat_colector = filtred_cat_colector
+        self.filtred_cat_colector = []
+        self.alpaca_data = data
         self.collector = set()
 
     def extract(self, obj_class):
-        obj = obj_class(data)
+        obj = obj_class(self.alpaca_data)
         obj.search_data()
         return obj.final_filter()
 
@@ -275,15 +257,21 @@ class FindDublicate:
                     self.collector.add(i["instruction"])
                     filterd_cat.append(i)
             self.filtred_cat_colector.append(filterd_cat)
+        return self.filtred_cat_colector
+
+def ready_to_generate():
+    data = load_dataset(r".cache\huggingface\hub\datasets--tatsu-lab--alpaca")
+    data = data["train"]  # .shuffle(seed=560).select(range(10))  
+    
+    find_duplicate = FindDuplicate(data)
+    ready_cats = find_duplicate.start()  # явно передаем
+    return ready_cats
 
 def main():
-    all_dialogues = []
-    find_dublicat = FindDublicate(all_dialogues)
-    find_dublicat.start()
-    return all_dialogues
+    filtred_cats = ready_to_generate(data)
+    for cat in filtred_cats:
+        print(len(cat))
 
 if __name__ == "__main__":
-    data = load_dataset(r"C:\Users\user\.cache\huggingface\hub\datasets--tatsu-lab--alpaca")
-    data = data["train"]  # .shuffle(seed=560).select(range(10))
     main()
 
