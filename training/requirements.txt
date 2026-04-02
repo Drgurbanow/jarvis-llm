@@ -1,10 +1,18 @@
-# ⚠️ torch must be installed separately (Blackwell / cu128):
-# pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
+# torch install depends on your GPU:
+#
+# Standard (RTX 30xx / 40xx, CUDA 12.1):
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+#
+# Blackwell (RTX 50xx, CUDA 12.8 nightly):
+#   pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
+#
+# CPU only:
+#   pip install torch
 #
 # Then install the rest:
-# pip install -r requirements.txt
+#   pip install -r requirements.txt
 
-# torch==2.10.0+cu128  ← installed separately, see above
+# torch==2.10.0+cu128  ← dev environment, install separately (see above)
 transformers==5.4.0
 peft==0.18.1
 trl==0.12.0
