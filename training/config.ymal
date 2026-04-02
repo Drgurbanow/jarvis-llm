@@ -1,0 +1,37 @@
+# training/config.yaml
+model:
+  name: "microsoft/phi-4-mini-instruct"
+  use_flash_attention: true
+
+quantization:
+  load_in_4bit: true
+  compute_dtype: "float16"
+  use_double_quant: true
+  quant_type: "nf4"
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+
+training:
+  output_dir: "./checkpoints"
+  num_epochs: 3
+  batch_size: 6 # depends on your GPU
+  gradient_accumulation_steps: 6 # adjust to achieve the desired effective batch size
+  learning_rate: 2e-4
+  warmup_steps: 100
+  max_seq_length: 1024
+  fp16: true
+  logging_steps: 50
+  save_steps: 75
+  eval_steps: 75
+  save_total_limit: 1
+  lr_scheduler: "cosine"
+  optimizer: "adamw_torch"
+
+data:
+  path: "./output/tokenized_dialogues.jsonl"
+  test_split: 0.05
+  seed: 69
