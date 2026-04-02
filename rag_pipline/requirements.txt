@@ -1,0 +1,20 @@
+# torch install depends on your GPU:
+#
+# Standard (RTX 30xx / 40xx, CUDA 12.1):
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+#
+# Blackwell (RTX 50xx, CUDA 12.8 nightly):
+#   pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu128
+#
+# CPU only:
+#   pip install torch
+#
+# Then install the rest:
+#   pip install -r requirements.txt
+
+# torch==2.10.0+cu128  ← dev environment, install separately (see above)
+faiss-cpu==1.13.2
+llama-index==0.14.16
+llama-index-vector-stores-faiss==0.6.0
+llama-index-embeddings-huggingface==0.7.0
+llama-index-readers-file==0.5.6
