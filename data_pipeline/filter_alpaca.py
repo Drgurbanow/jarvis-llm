@@ -43,7 +43,7 @@ class CategoryTwo:
         self.data = data
         self.container = list()
 
-    def search_data_2(self):
+    def search_data(self):
         c = 0  # theory|explain|reason|physics|formula|calculate|why
         for n, i in enumerate(self.data, start=1):
             x = re.search(
