@@ -1,33 +1,35 @@
-import torch, json, re, os, transformers
+# Usage:
+# 1. Set DATA_PATH and OUTPUT_DIR at the top of the file
+# 2. python train.py
+
+import torch, json, os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 
 from trl import DataCollatorForCompletionOnlyLM
-from datasets import load_dataset, Dataset
+from datasets import Dataset
 from peft import get_peft_model, LoraConfig, TaskType
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments, Trainer
-#"C:\Users\user\.cache\huggingface\hub\models--microsoft--phi-3-mini-4k"#"C:\Users\user\.cache\huggingface\hub\models--microsoft--phi-2"
-model_name = "microsoft/phi-4-mini-instruct"
-DATA_PATH = "your_path_here/chat_temp_all_in_one.jsonl"
 
-x = torch.cuda.is_available()
-print(x, torch.cuda.get_device_name(0))  # True NVIDIA GeForce RTX 3050 Laptop GPU
-import accelerate
-if not hasattr(accelerate.Accelerator, 'unwrap_model'):
-    # Старая версия accelerate
-    pass
+MODEL_NAME = "microsoft/phi-4-mini-instruct"
+DATA_PATH = "your_path_here/chat_temp_all_in_one.jsonl"
+OUTPUT_DIR = "your_path_here/checkpoints"
+
+if torch.cuda.is_available():
+    print(True, torch.cuda.get_device_name(0))
+
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,  # "float16"
+    bnb_4bit_compute_dtype=torch.float16,
     bnb_4bit_use_double_quant=True,
     bnb_4bit_quant_type="nf4",
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    device_map="auto",  # {"": "cuda:0"},auto
-    quantization_config=bnb_config,#dtype=torch.float8_e4m3fnuz,#float8_e4m3fn,
+    MODEL_NAME,
+    device_map="auto",  # {"": "cuda:0"}
+    quantization_config=bnb_config,
     attn_implementation="flash_attention_2",
     #trust_remote_code=True
 )
@@ -37,7 +39,7 @@ lora_config = LoraConfig(
     lora_alpha=32,
     lora_dropout=0.05,
     bias="none",
-    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],#,, "gate_proj", "up_proj", "down_proj"
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"], #,"gate_proj", "up_proj", "down_proj"
     task_type=TaskType.CAUSAL_LM
 )
 model = get_peft_model(model, lora_config)
@@ -45,7 +47,7 @@ model.gradient_checkpointing_enable()
 model.enable_input_require_grads()
 model.config.use_cache = False
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
 tokenizer.pad_token = tokenizer.eos_token
 model.config.pad_token_id = tokenizer.pad_token_id
 model.config.bos_token_id = tokenizer.bos_token_id
@@ -63,7 +65,7 @@ def load(path):
 
 
 dialog_container = load(
-    path=r"C:\Users\user\Desktop\QLoRa_chat_tem_610_all_in_one\chat_temp_610_all_in_one.jsonl")  # r"/kaggle/input/openhermes-2-5/openhermes2_5.json"
+    path=DATA_PATH)
 data = Dataset.from_list(dialog_container)
 data = data.shuffle(seed=69)
 data = data.train_test_split(test_size=0.05)
@@ -75,7 +77,7 @@ def tokenizing_function(data_batch):
     return tokenizer(text,
                      padding=False,  # "longest", #dataCollator will do it
                      truncation=True,
-                     max_length=728,
+                     max_length=1024,
                      )
 
 tokenized_train_data = train_data.map(tokenizing_function, batched=True, remove_columns=train_data.column_names)
@@ -93,7 +95,7 @@ data_collator = DataCollatorForCompletionOnlyLM(
 )
 
 training_args = TrainingArguments(
-    output_dir=r"C:\Users\user\Desktop\FlappyBird\Test\phi_5_mini_linear_16_32_eos_3_epoc_no_rag_no_mlp_renewed",
+    output_dir=OUTPUT_DIR,
     per_device_train_batch_size=6,
     gradient_accumulation_steps=6,
     learning_rate=2e-4,
@@ -107,17 +109,13 @@ training_args = TrainingArguments(
     save_total_limit=1,
     report_to='none',
     remove_unused_columns=False,
-    lr_scheduler_type="cosine",  # Правильно,#"cosine",
-    optim="adamw_torch",#"paged_adamw_8bit",  # "adamw_torch",
+    lr_scheduler_type="cosine",
+    optim="adamw_torch",
     label_names=["labels"],
     eval_strategy="steps",
     eval_steps=75,
     load_best_model_at_end=True,
-
     dataloader_pin_memory=True,
-    # dataloader_prefetch_factor=2,
-    # dataloader_num_workers=4,
-    # dataloader_persistent_workers=True
 )
 
 trainer = Trainer(
@@ -129,5 +127,6 @@ trainer = Trainer(
     # tokenizer=tokenizer  # processing_class=tokenizer
 )
 
-torch.cuda.empty_cache()
-trainer.train()
+if __name__ == "__main__":
+    torch.cuda.empty_cache()
+    trainer.train()
