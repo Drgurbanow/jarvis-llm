@@ -2,13 +2,16 @@ import torch, time, os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from peft import get_peft_model, PeftModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-from prepare_to_input import PrepareToInput
+from prepare_to_input import PrepareToInput, PrepareToOutput
 
-model_path = "Path"
-adapter_path = "adapter_path"
-test_cases_path = "test_cases_path"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = "microsoft/phi-3.5-mini-instruct"
+ADAPTER_PATH  = os.path.join(BASE_DIR, "adapter")
+TEST_CASES_PATH = os.path.join(BASE_DIR, "test_cases.jsonl")
+OUTPUT_PATH = os.path.join(BASE_DIR, "outputs.jsonl")
+BATCH_SIZE = 12  # optimized for 8GB VRAM
 
-tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH , trust_remote_code=True)
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -18,18 +21,16 @@ bnb_config = BitsAndBytesConfig(
 )
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_path,
+    MODEL_PATH ,
     device_map="auto",
     quantization_config=bnb_config,
     attn_implementation='flash_attention_2',
 )
 
-model_Qlora = PeftModel.from_pretrained(model, adapter_path)
+model_Qlora = PeftModel.from_pretrained(model, ADAPTER_PATH)
 model_Qlora.eval()
 
-prompt = "NONE"
 
-inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 end_token_id = tokenizer.convert_tokens_to_ids("<|end|>")
 endoftext_token_id = tokenizer.convert_tokens_to_ids("<|endoftext|>")
 
@@ -50,24 +51,27 @@ def generate_batch(model, tokenizer, prompts, batch_size=12):
                 do_sample=False,
                 eos_token_id=[end_token_id, endoftext_token_id],
                 pad_token_id=endoftext_token_id,
-                tokenizer=tokenizer,
-                repetition_penalty=1.025,
+                repetition_penalty=1.02,
             )
 
         batch_responses = tokenizer.batch_decode(outputs, skip_special_tokens=False)
         responses.extend(batch_responses)
-        torch.cuda.empty_cache()
 
     return responses
 
 def main():
-    prepare = PrepareToInput()
-    iterator_read = prepare.read_iter(test_cases_path)
-    prompts = [*iterator_read]
-    responses = generate_batch(model, tokenizer, prompts, batch_size=12)
-    print(*responses, sep="\n#############################\n")
+    prepare_to_input = PrepareToInput()
+    prepare_to_output = PrepareToOutput()
+    #---------------------------------------------------------
+    iterator_read = prepare_to_input.read_iter(TEST_CASES_PATH)
+    prompts = [prepare_to_input.prep_input_prompt(rag, question) for rag, question in iterator_read]
+    responses = generate_batch(model, tokenizer, prompts, batch_size=BATCH_SIZE)
+    # ---------------------------------------------------------
+    prepare_to_output.write_iter(OUTPUT_PATH, responses)
 
 if __name__ == "__main__":
-    pass
+    start = time.time()
+    main()
+    print("Time:", time.time() - start)
 
 
