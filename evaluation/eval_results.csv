@@ -1,0 +1,6 @@
+model_name,style,context,reasoning,hallucination
+phi35_mini_base_inst,5.3/10,9.0/10,7.5/10,4.4%
+phi35_mini_ft,8.3/10,7.5/10,7.2/10,7%
+phi4_mini_base_inst,5.2/10,9.5/10,9/10,2.2%
+phi4_mini_ft,8.4/10,7.8/10,7.3/10,5%
+phi4_mini_ft_8bit,8.4/10,8/10,8.3/10,4%
