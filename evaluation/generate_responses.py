@@ -2,9 +2,11 @@ import torch, time, os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from peft import get_peft_model, PeftModel
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from prepare_to_input import PrepareToInput
 
 model_path = "Path"
 adapter_path = "adapter_path"
+test_cases_path = "test_cases_path"
 
 tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
 
@@ -27,7 +29,7 @@ model_Qlora.eval()
 
 prompt = "NONE"
 
-inputs = inputs = tokenizer(prompt, return_tensors="pt").to(model1.device)
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 end_token_id = tokenizer.convert_tokens_to_ids("<|end|>")
 endoftext_token_id = tokenizer.convert_tokens_to_ids("<|endoftext|>")
 
@@ -57,6 +59,13 @@ def generate_batch(model, tokenizer, prompts, batch_size=12):
         torch.cuda.empty_cache()
 
     return responses
+
+def main():
+    prepare = PrepareToInput()
+    iterator_read = prepare.read_iter(test_cases_path)
+    prompts = [*iterator_read]
+    responses = generate_batch(model, tokenizer, prompts, batch_size=12)
+    print(*responses, sep="\n#############################\n")
 
 if __name__ == "__main__":
     pass
