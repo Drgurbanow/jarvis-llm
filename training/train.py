@@ -12,9 +12,10 @@ from datasets import Dataset
 from peft import get_peft_model, LoraConfig, TaskType
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TrainingArguments, Trainer
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_NAME = "microsoft/phi-4-mini-instruct"
-DATA_PATH = "your_path_here/chat_temp_all_in_one.jsonl"
-OUTPUT_DIR = "your_path_here/checkpoints"
+DATA_PATH = os.path.join(BASE_DIR, "chat_temp_all_in_one.jsonl")
+OUTPUT_DIR = os.path.join(BASE_DIR, "checkpoints")
 
 if torch.cuda.is_available():
     print(True, torch.cuda.get_device_name(0))
