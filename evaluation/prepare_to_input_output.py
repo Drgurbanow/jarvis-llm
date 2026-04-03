@@ -1,6 +1,19 @@
 import json
 
 
+class PrepareToOutput:
+    def clean_tokens(self, text):
+        return text.replace('<|endoftext|>', "") + '\n<|endoftext|>'
+
+    def write_iter(self, path, responses):
+        with open(path, mode="a", encoding="utf-8") as file:
+            for n, item in enumerate(responses):
+                cleaned_item = self.clean_tokens(item)
+                x = {f"dialog_{n}": cleaned_item}
+                jsonl = json.dumps(x, ensure_ascii=False) + "\n"
+                file.write(jsonl)
+
+
 class PrepareToInput:
     def read_iter(self, path):
         with open(path, mode="r", encoding="utf-8") as file:
