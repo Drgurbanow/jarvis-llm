@@ -5,17 +5,19 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 model_name = "microsoft/phi-3.5-mini-instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 paths = [
-    "your_path_here/ready_cat_1.jsonl",
-    "your_path_here/ready_cat_2.jsonl",
-    "your_path_here/ready_cat_3.jsonl",
-    "your_path_here/ready_cat_4.jsonl",
-    "your_path_here/ready_cat_5.jsonl",
-    "your_path_here/ready_cat_6.jsonl",
-    "your_path_here/ready_cat_7.jsonl"
+    os.path.join(BASE_DIR, "ready_cat_1.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_2.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_3.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_4.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_5.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_6.jsonl"),
+    os.path.join(BASE_DIR, "ready_cat_7.jsonl"),
 ]
 
-output_path = "your_output_path/all_dialogues.jsonl"
+output_path = os.path.join(BASE_DIR, "all_dialogues.jsonl")
 
 
 def write_to_jsonl(output_path, dialog, indx):
