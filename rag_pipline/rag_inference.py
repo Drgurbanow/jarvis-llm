@@ -10,7 +10,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.readers.file import PyMuPDFReader
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 EMBEDDING_MODEL_PATH = os.path.join(BASE_DIR, "models/bge-base-en-v1.5")
 DOCUMENTS_PATH = [os.path.join(BASE_DIR, "data/knowledge_base.txt")]
 PERSIST_DIR = os.path.join(BASE_DIR, "rag_storage")
