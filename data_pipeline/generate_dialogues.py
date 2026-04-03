@@ -112,17 +112,20 @@ class AsyncDeepSeekDataGenerator:
 
         await self.client.close()
 
-print("----------------------------------------------------------------------------------------")
-
+#----------------------------------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "output_folder")
 CONCURRENT_REQUESTS = 40
-OUTPUT_FOLDER = "your_output_folder_path_here"
 API_KEY = "your_api_key"
 
-cat_container = ready_to_generate() # cat_container = [[], [], [], [], [], [], []]
-for n, cat in enumerate(cat_container, start=1):
-    prepare_generator = AsyncDeepSeekDataGenerator(sys_prompt, API_KEY, output_folder_path=OUTPUT_FOLDER, num_of_cat=7)
-    X = fr"{OUTPUT_FOLDER}\ready_cat_{n}.jsonl"
-    asyncio.run(prepare_generator.generate(alpaca_data=cat, output_file_path=X))
+def main():
+    cat_container = ready_to_generate() # cat_container = [[], [], [], [], [], [], []]
+    for n, cat in enumerate(cat_container, start=1):
+        prepare_generator = AsyncDeepSeekDataGenerator(sys_prompt, API_KEY, output_folder_path=OUTPUT_FOLDER, num_of_cat=7)
+        X = fr"{OUTPUT_FOLDER}\ready_cat_{n}.jsonl"
+        asyncio.run(prepare_generator.generate(alpaca_data=cat, output_file_path=X))
 
+if __name__ == "__main__":
+    main()
 
 
