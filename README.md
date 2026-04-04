@@ -74,6 +74,7 @@ architecture_diagram.png
 ---
 
 ## 📁 Project Structure
+```
 jarvis-llm/
 ├── README.md
 ├── architecture_diagram.png
@@ -93,6 +94,8 @@ jarvis-llm/
 │   └── summary.md              # Analysis and conclusions
 ├── requirements.txt
 └── LICENSE
+```
+
 ---
 
 ## ⚙️ Setup
